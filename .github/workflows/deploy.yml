@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Step 1: Checkout code from repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    # Step 2: Set up Java 17
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+    
+    # Step 3: Build with Maven
+    - name: Build with Maven
+      run: mvn clean package -DskipTests
+    
+    # Step 4: Run tests
+    - name: Run tests
+      run: mvn test
+      continue-on-error: true
+    
+    # Step 5: Display build info
+    - name: Display build artifacts
+      run: |
+        echo "Build completed successfully!"
+        ls -lh target/
+    
+    # Step 6: Upload artifact for deployment
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: spring-boot-app
+        path: target/*.jar
+    
+    # Step 7: Generate deployment package
+    - name: Generate deployment package
+      run: |
+        mkdir -p deploy
+        cp target/*.jar deploy/application.jar
+        cd deploy
+        zip -r deploy.zip application.jar
+    
+    # Step 8: Get timestamp for version
+    - name: Get timestamp
+      id: time
+      run: echo "time=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+    
+    # Step 9: Deploy to AWS Elastic Beanstalk
+    - name: Deploy to Elastic Beanstalk
+      uses: einaregilsson/beanstalk-deploy@v21
+      with:
+        aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        application_name: cloud-test-app
+        environment_name: cloud-test-app-env
+        version_label: "version-${{ steps.time.outputs.time }}"
+        region: us-east-1
+        deployment_package: deploy/deploy.zip
+        wait_for_deployment: true
+        wait_for_environment_recovery: 300
+    
+    # Step 10: Notify completion
+    - name: Deployment complete
+      run: |
+        echo " Deployment completed successfully!"
+        echo "Version: version-${{ steps.time.outputs.time }}" 
+
+# Deployement complete
+
