@@ -1,0 +1,34 @@
+runtime: java17
+
+# IMPORTANT: Use the jar file Maven builds
+entrypoint: java -jar target/DBS-0.0.1-SNAPSHOT.jar
+
+# Environment variables
+env_variables:
+  SPRING_PROFILES_ACTIVE: "gcp"
+  
+# Instance configuration - F1 is free tier
+instance_class: F1
+
+# Scaling configuration
+automatic_scaling:
+  min_instances: 0
+  max_instances: 1
+  min_idle_instances: 0
+  max_idle_instances: 0
+
+# Health checks
+liveness_check:
+  path: "/"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+readiness_check:
+  path: "/"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+  app_start_timeout_sec: 300

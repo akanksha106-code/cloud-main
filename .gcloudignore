@@ -1,0 +1,15 @@
+.git
+.gitignore
+target/classes/
+target/test-classes/
+target/maven-status/
+*.md
+README*
+logs/
+.mvn/
+mvnw
+mvnw.cmd
+.vscode/
+.idea/
+*.iml
+src/test/
